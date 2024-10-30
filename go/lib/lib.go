@@ -131,13 +131,28 @@ func GetYaml(templateYaml string, valuesYaml string) string {
 	// If the template contains `required`, we don't want to return an error which
 	// would prevent previewing the entire template. Simply pass the value through.
 	funcMap["required"] = func(warn string, val interface{}) (interface{}, error) {
+		if val == nil {
+			return nil, fmt.Errorf("%s", warn)
+		}
 		return val, nil
 	}
 
 	// If the template contains `fail`, we don't want to return an error which
 	// would prevent previewing the entire template. Return an empty string.
 	funcMap["fail"] = func(val interface{}) (interface{}, error) {
-		return "", nil
+		return "", fmt.Errorf("%s", val)
+	}
+
+	funcMap["tpl"] = func(val string, vals any) (string, error) {
+		var buf strings.Builder
+		tmpT, err := t.New(t.Name()).Parse(val)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse template: %w", err)
+		}
+		if err := tmpT.Execute(&buf, vals); err != nil {
+			return "", fmt.Errorf("error during tpl function execution for %w", err)
+		}
+		return buf.String(), nil
 	}
 
 	t.Funcs(funcMap)

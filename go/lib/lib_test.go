@@ -56,12 +56,12 @@ func TestGetYaml(t *testing.T) {
 		{
 			templateYaml:        "name: {{ .Values.foobar | required \".foobar must be set\" }}",
 			valuesYaml:          "",
-			expectedReturnValue: `{"yaml":"name: \u003cno value\u003e","err":"","warning":""}`,
+			expectedReturnValue: `{"yaml":"","err":"template: template:1:26: executing \"template\" at \u003crequired \".foobar must be set\"\u003e: error calling required: .foobar must be set","warning":""}`,
 		},
 		{
 			templateYaml:        "{{ fail \"reason\" }}",
 			valuesYaml:          "",
-			expectedReturnValue: `{"yaml":"","err":"","warning":""}`,
+			expectedReturnValue: `{"yaml":"","err":"template: template:1:3: executing \"template\" at \u003cfail \"reason\"\u003e: error calling fail: reason","warning":""}`,
 		},
 		{
 			templateYaml: `
@@ -106,6 +106,12 @@ func TestGetYaml(t *testing.T) {
 			templateYaml:        "first: truesecond:\n  third: true",
 			valuesYaml:          "",
 			expectedReturnValue: `{"yaml":"first: truesecond:\n  third: true","err":"","warning":"error converting YAML to JSON: yaml: mapping values are not allowed in this context"}`,
+		},
+		// tpl func
+		{
+			templateYaml:        `bye: "{{ tpl .Values.hello $ }}"`,
+			valuesYaml:          `hello: "world"`,
+			expectedReturnValue: `{"yaml":"bye: \"world\"","err":"","warning":""}`,
 		},
 	}
 
